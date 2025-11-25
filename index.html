@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K-APEX Rate Repository</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #FF8C00 0%, #FF6B00 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+
+        .search-section {
+            padding: 40px;
+            background: #f8f9fa;
+        }
+
+        .search-box {
+            position: relative;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 18px 24px;
+            font-size: 1.1em;
+            border: 3px solid #FF8C00;
+            border-radius: 50px;
+            outline: none;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .search-box input:focus {
+            border-color: #FF6B00;
+            box-shadow: 0 6px 20px rgba(255, 140, 0, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .autocomplete-items {
+            position: absolute;
+            border: 1px solid #d4d4d4;
+            border-bottom: none;
+            border-top: none;
+            z-index: 99;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 300px;
+            overflow-y: auto;
+            background: white;
+            border-radius: 0 0 15px 15px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+
+        .autocomplete-items div {
+            padding: 14px 24px;
+            cursor: pointer;
+            border-bottom: 1px solid #e0e0e0;
+            transition: all 0.2s;
+        }
+
+        .autocomplete-items div:hover {
+            background-color: #fff3e0;
+            padding-left: 30px;
+        }
+
+        .autocomplete-active {
+            background-color: #FF8C00 !important;
+            color: white !important;
+        }
+
+        .results-section {
+            padding: 40px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+            color: #666;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        .error {
+            text-align: center;
+            padding: 40px;
+            color: #d32f2f;
+            font-size: 1.1em;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        th {
+            background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+            color: white;
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9em;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        tr:hover {
+            background-color: #fff3e0;
+            transition: background-color 0.2s;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .no-results h2 {
+            color: #FF8C00;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        .no-results p {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+        }
+
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .stats {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stats span {
+            font-size: 1.1em;
+            color: #666;
+            margin: 0 15px;
+        }
+
+        .stats strong {
+            color: #FF8C00;
+            font-size: 1.3em;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .header p {
+                font-size: 1em;
+            }
+
+            .search-section, .results-section {
+                padding: 20px;
+            }
+
+            table {
+                font-size: 0.9em;
+            }
+
+            th, td {
+                padding: 10px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚚 K-APEX Rate Repository</h1>
+            <p>Search Consolidation Rates by Destination</p>
+        </div>
+
+        <div class="search-section">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Enter destination city (e.g., Phoenix, Dallas, Denver)" autocomplete="off">
+                <div id="autocomplete-list" class="autocomplete-items"></div>
+            </div>
+        </div>
+
+        <div class="results-section" id="results">
+            <div class="loading">Loading rate data</div>
+        </div>
+    </div>
+
+    <script>
+        let ratesData = [];
+        let uniqueDestinations = new Set();
+
+        // Fetch and parse CSV data
+        async function loadCSVData() {
+            try {
+                const response = await fetch('CONSOL_RATES.csv');
+                if (!response.ok) {
+                    throw new Error('Failed to load CSV file');
+                }
+                
+                const csvText = await response.text();
+                parseCSV(csvText);
+                
+                document.getElementById('results').innerHTML = `
+                    <div class="stats">
+                        <span><strong>${ratesData.length}</strong> total rates</span>
+                        <span><strong>${uniqueDestinations.size}</strong> destinations</span>
+                    </div>
+                    <div class="no-results">
+                        <h2>👋 Welcome!</h2>
+                        <p>Start typing a destination city in the search box above to find rates.</p>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Error loading CSV:', error);
+                document.getElementById('results').innerHTML = `
+                    <div class="error">
+                        <h2>⚠️ Error Loading Data</h2>
+                        <p>Could not load CONSOL_RATES.csv. Please make sure the file is in the same directory as this HTML file.</p>
+                        <p style="font-size: 0.9em; margin-top: 20px;">Error: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Parse CSV text into data structure
+        function parseCSV(csvText) {
+            const lines = csvText.split('\n');
+            
+            // Skip header row
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                // Split by comma, but handle quoted fields
+                const parts = line.split(',').map(part => part.trim().replace(/^"|"$/g, ''));
+                
+                if (parts.length >= 4) {
+                    const rate = {
+                        facility: parts[0],
+                        destination: parts[1],
+                        supplier: parts[2],
+                        rate: parts[3]
+                    };
+                    
+                    ratesData.push(rate);
+                    uniqueDestinations.add(rate.destination);
+                }
+            }
+        }
+
+        // Search functionality
+        function searchRates(searchTerm) {
+            if (!searchTerm) {
+                document.getElementById('results').innerHTML = `
+                    <div class="stats">
+                        <span><strong>${ratesData.length}</strong> total rates</span>
+                        <span><strong>${uniqueDestinations.size}</strong> destinations</span>
+                    </div>
+                    <div class="no-results">
+                        <h2>👋 Welcome!</h2>
+                        <p>Start typing a destination city in the search box above to find rates.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const results = ratesData.filter(rate => 
+                rate.destination.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+            displayResults(results, searchTerm);
+        }
+
+        // Display results in table
+        function displayResults(results, searchTerm) {
+            const resultsDiv = document.getElementById('results');
+
+            if (results.length === 0) {
+                resultsDiv.innerHTML = `
+                    <div class="no-results">
+                        <h2>😕 No Results Found</h2>
+                        <p>No rates found for "${searchTerm}"</p>
+                        <p style="margin-top: 30px;">Try searching for:</p>
+                        <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRzW-VqQ5IWN_ycWTjbVXf3EQOqLyiMkP7Jcy3WFaScvYJpRAipH-Uh2JLhgaQIFg/pubhtml?gid=1329053316&amp;single=true&amp;widget=true&amp;headers=false"></iframe>
+                    </div>
+                `;
+                return;
+            }
+
+            // Sort results by rate (lowest first)
+            results.sort((a, b) => {
+                const rateA = parseFloat(a.rate.replace(/[^0-9.-]/g, ''));
+                const rateB = parseFloat(b.rate.replace(/[^0-9.-]/g, ''));
+                return rateA - rateB;
+            });
+
+            let html = `
+                <div class="stats">
+                    <span><strong>${results.length}</strong> rate${results.length !== 1 ? 's' : ''} found for "${searchTerm}"</span>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Facility</th>
+                            <th>Destination City</th>
+                            <th>Supplier</th>
+                            <th>Base + FSC</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            results.forEach(rate => {
+                // Format rate as currency
+                const rateValue = parseFloat(rate.rate.replace(/[^0-9.-]/g, ''));
+                const formattedRate = '$' + rateValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+                html += `
+                    <tr>
+                        <td>${rate.facility}</td>
+                        <td>${rate.destination}</td>
+                        <td>${rate.supplier}</td>
+                        <td><strong>${formattedRate}</strong></td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            resultsDiv.innerHTML = html;
+        }
+
+        // Autocomplete functionality
+        function autocomplete(inp) {
+            let currentFocus;
+
+            inp.addEventListener("input", function(e) {
+                const val = this.value;
+                closeAllLists();
+                
+                if (!val) {
+                    searchRates('');
+                    return;
+                }
+
+                currentFocus = -1;
+
+                const listDiv = document.getElementById("autocomplete-list");
+                
+                // Get matching destinations
+                const matches = Array.from(uniqueDestinations)
+                    .filter(dest => dest.toLowerCase().includes(val.toLowerCase()))
+                    .sort()
+                    .slice(0, 10); // Limit to 10 suggestions
+
+                if (matches.length === 0) {
+                    searchRates(val);
+                    return;
+                }
+
+                matches.forEach(dest => {
+                    const itemDiv = document.createElement("DIV");
+                    itemDiv.innerHTML = dest;
+                    itemDiv.addEventListener("click", function(e) {
+                        inp.value = dest;
+                        closeAllLists();
+                        searchRates(dest);
+                    });
+                    listDiv.appendChild(itemDiv);
+                });
+            });
+
+            inp.addEventListener("keydown", function(e) {
+                let list = document.getElementById("autocomplete-list");
+                if (list) list = list.getElementsByTagName("div");
+                
+                if (e.keyCode === 40) { // Down arrow
+                    currentFocus++;
+                    addActive(list);
+                } else if (e.keyCode === 38) { // Up arrow
+                    currentFocus--;
+                    addActive(list);
+                } else if (e.keyCode === 13) { // Enter
+                    e.preventDefault();
+                    if (currentFocus > -1) {
+                        if (list) list[currentFocus].click();
+                    } else {
+                        searchRates(this.value);
+                    }
+                }
+            });
+
+            function addActive(list) {
+                if (!list) return false;
+                removeActive(list);
+                if (currentFocus >= list.length) currentFocus = 0;
+                if (currentFocus < 0) currentFocus = (list.length - 1);
+                list[currentFocus].classList.add("autocomplete-active");
+            }
+
+            function removeActive(list) {
+                for (let i = 0; i < list.length; i++) {
+                    list[i].classList.remove("autocomplete-active");
+                }
+            }
+
+            function closeAllLists(elmnt) {
+                const items = document.getElementsByClassName("autocomplete-items");
+                for (let i = 0; i < items.length; i++) {
+                    if (elmnt !== items[i] && elmnt !== inp) {
+                        items[i].innerHTML = '';
+                    }
+                }
+            }
+
+            document.addEventListener("click", function(e) {
+                closeAllLists(e.target);
+            });
+        }
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', function() {
+            loadCSVData();
+            autocomplete(document.getElementById("searchInput"));
+        });
+    </script>
+</body>
+</html>
